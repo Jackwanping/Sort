@@ -10,9 +10,10 @@
 #include<iostream>
 using namespace std;
 #include<vector>
+#include<list>
 #include<algorithm>
 #include<limits.h>
-
+#include<cmath>
 
 const int INF = 0x3f3f3f3f;
 int a[5] = {4,2,5,1,8};
@@ -33,6 +34,10 @@ public:
     //归并排序
     void merge(vector<int>&Data,int n,int left,int mid,int right); //合并
     void mergeSort(vector<int>&Data,int n,int left,int right);     //分开
+    //--------非比较类--------------//
+    void countSort(vector<int>&Data);                      //计数排序
+    void bucketSort(vector<int>&Data);                     //桶排序
+    void radixSort(vector<int>&Data);                      //基数排序 
 };
 
 void Sort::bubbleSort(vector<int>& Data)
@@ -49,7 +54,7 @@ void Sort::bubbleSort(vector<int>& Data)
 void Sort::quickSort(vector<int>&Data,int left,int right)
 {
     if(left < right)
-    {
+    { //
         int i = left;
         int j = right;
         int x = Data[i];
@@ -156,22 +161,22 @@ void Sort::heapSort(vector<int>&Data,int size)
 
 void Sort::merge(vector<int>&Data,int n,int left,int mid,int right)
 {
-    int n1 = mid - left;
-    int n2 = right - mid;
-    vector<int>Data_left;
-    vector<int>Data_right;
-    for(int i = 0;i<n1;++i) Data_left[i] = Data[left + i];
-    for(int j = 0;j<n2;++j) Data_right[j] = Data[mid + j];
-    Data_left[n1] = Data_right[n2] = INF;
-    int count1 = 0;
-    int count2 = 0;
-    for(int k = left;k<right;++k)
-    {
+      int n1 = mid - left;
+      int n2 = right - mid;
+      vector<int>Data_left(n1,0);
+      vector<int>Data_right(n2,0);
+      for(int i = 0;i<n1;++i) Data_left[i] = Data[left + i];
+      for(int j = 0;j<n2;++j) Data_right[j] = Data[mid + j];
+      Data_left[n1] = Data_right[n2] = INF;
+      int count1 = 0;
+      int count2 = 0;
+     for(int k = left;k<right;++k)
+     {
         if(Data_left[count1] <= Data_right[count2]) Data[k] = Data_left[count1++];
         else Data[k] = Data_right[count2++];
-    }
+     }
 }
-
+  
 void Sort::mergeSort(vector<int>&Data,int n,int left,int right)
 {
     if(left + 1 < right)
@@ -180,8 +185,100 @@ void Sort::mergeSort(vector<int>&Data,int n,int left,int right)
          mergeSort(Data,n,left,mid);
          mergeSort(Data,n,mid,right);
          merge(Data,n,left,mid,right);
+   }
+}
+
+void Sort::countSort(vector<int>&Data)
+{
+    // 先找到数组中的最大值，申请空间
+    int max_value = INT_MIN;
+    for(int i = 0;i<Data.size();++i)
+    {
+        if(Data[i] > max_value) max_value = Data[i];
+    }
+    vector<int>Demo(max_value + 1,0);
+    for(int i = 0;i<Data.size();++i)
+    {
+        Demo[Data[i]]++;                 //数为Data[i] 的个数加1
+    }
+    int index = 0;
+    for(int i = 0;i<Demo.size();++i)
+    {
+        while(Demo[i] > 0)
+        {
+            Data[index++] = i;
+            Demo[i]--;
+        }
     }
 }
+
+void Sort::bucketSort(vector<int>&Data)
+{
+    int minValue = Data[0];
+    int maxValue = Data[0];
+    for(int i = 1;i<Data.size();++i)
+    {
+        if(Data[i] > maxValue) maxValue = Data[i];
+        if(Data[i] < minValue) minValue = Data[i];
+    }
+
+    int buckerSize = 5;                                                   //桶的个数
+    int bucketCount = floor((maxValue - minValue) / buckerSize); //桶内的取值范围
+    vector<vector<int>>buckets(buckerSize,vector<int>(bucketCount,INT_MIN));
+    for(int i = 0;i<Data.size();++i)
+    {
+        buckets[floor((Data[i] - minValue) / buckerSize)].push_back(Data[i]); 
+    }
+    int count = 0;
+    for(int i = 0;i<buckets.size();++i)
+    {
+        insertSort(buckets[i]);
+        for(int j = 0;j<buckets[i].size();j++)
+        {
+            if(buckets[i][j]!=INT_MIN) Data[count++] = buckets[i][j];
+        }
+    }
+    
+}
+
+
+void Sort::radixSort(vector<int>& Data)
+{
+    int length = Data.size();
+    // 求最大值的位数
+    int max_value = INT_MIN;
+    for(int i = 0;i<length;++i)
+    {
+        if(Data[i] > max_value) max_value = Data[i]; 
+    }
+    int digit = 1;
+    while(max_value/10 > 0)
+    {
+        ++digit;
+        max_value /= 10;
+    }
+
+    vector<list<int>>bucket_list;
+    bucket_list.resize(10);
+    for(int i = 1;i<=digit;++i)
+    {
+        for(int j = 0;j<length;++j)
+        {
+            int radix =static_cast<int>(Data[j] / pow(10,i-1)) % 10;
+            bucket_list[radix].push_back(Data[j]);
+        }
+        int k = 0;
+        for(int n = 0;n<10;++n)
+        {
+            for(auto value:bucket_list[n])
+            {
+                Data[k++] = value;
+            }
+            bucket_list[n].clear();
+        }
+    }
+}
+
 int main()
 {
     Sort s;
@@ -191,7 +288,10 @@ int main()
     //s.shellSort(Data);
     //s.selectSort(Data);
     //s.heapSort(Data,Data.size());
-    s.mergeSort(Data,Data.size(),0,Data.size());
+    //s.mergeSort(Data,Data.size(),0,Data.size());
+    //s.countSort(Data);
+    //s.bucketSort(Data);
+    s.radixSort(Data);
     for(int i = 0;i<Data.size();++i) cout<<Data[i]<<" ";
     return 0;
 }

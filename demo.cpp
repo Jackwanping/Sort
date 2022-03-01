@@ -13,41 +13,50 @@ using namespace std;
 #include<algorithm>
 #include<unordered_map>
 #include<map>
-static unordered_map<int, int> costs = {
-    {1, 2}, {2, 5}, {3, 5}, {4, 4},
-    {5, 5}, {6, 6}, {7, 3}, {8, 7}, {9, 6},
-};
-
-static unordered_map<int, int> costss = {
-    {1, 100}, {2, 1}, {3, 1}, {4, 1},
-    {5, 1}, {6, 1}, {7, 1}, {8, 1}, {9, 1},
-};
+#include<iostream>
+using namespace std;
+const int maxn=500000,INF=0x3f3f3f3f;
+int L[maxn/2+2],R[maxn/2+2];
+void merge(int a[],int n,int left,int mid,int right)
+{
+    int n1=mid-left,n2=right-mid;
+    for(int i=0;i<n1;i++)
+        L[i]=a[left+i];
+    for(int i=0;i<n2;i++)
+        R[i]=a[mid+i];
+    L[n1]=R[n2]=INF;
+    int i=0,j=0;
+    for(int k=left;k<right;k++)
+    {
+        if(L[i]<=R[j])
+            a[k]=L[i++];
+        else
+            a[k]=R[j++];
+    }
+}
+void mergesort(int a[],int n,int left,int right)
+{
+    if(left+1<right)
+    {
+        int mid=(left+right)/2;
+        mergesort(a,n,left,mid);
+        mergesort(a,n,mid,right);
+        merge(a,n,left,mid,right);
+    }
+}
 int main()
 {
-    int m;
-    cin>>m;
-    while(m--)
+    int a[maxn],n;
+    cin>>n;
+    for(int i=0;i<n;i++)
+        cin>>a[i];
+    mergesort(a,n,0,n);
+    for(int i=0;i<n;i++)
     {
-        int n;
-        cin>>n;
-        map<int,int>m;
-        for(int i = 0;i<n;++i)
-        {
-            int temp;
-            cin>>temp;
-            m[temp]++;
-        }
-        int count = 0;
-        map<int,int>::iterator iter;
-        for(iter = m.begin();iter!=m.end();++iter)
-        {
-              if(iter->second == 1)
-              {
-                  cout<<iter->first<<endl;
-                  break;
-              }
-        }
-        if(iter == m.end()) cout<<"-1"<<endl;
+        if(i)
+            cout<<" ";
+        cout<<a[i];
     }
+    cout<<endl;
     return 0;
 }
